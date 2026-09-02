@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSC Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F2;
+    --surface:#FFFFFF;
+    --ink:#1C1B19;
+    --ink-soft:#726E66;
+    --ink-faint:#A7A297;
+    --border:#E4E1D9;
+    --red:#D64545;
+    --red-dim:#F4D6D3;
+    --amber:#E8A33D;
+    --amber-dim:#F7E4C6;
+    --green:#3A945D;
+    --green-dim:#D6E9DA;
+    --unrated:#D9D6CD;
+    --unrated-dim:#EFEDE7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .app{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 0 80px;
+  }
+  /* ---------- Header ---------- */
+  header{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:var(--bg);
+    padding:20px 20px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .header-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .title-block h1{
+    font-size:22px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .title-block .sub{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin-top:2px;
+  }
+  .overall-pct{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:30px;
+    line-height:1;
+    text-align:right;
+    white-space:nowrap;
+  }
+  .overall-pct span{
+    display:block;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-weight:500;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-align:right;
+    margin-top:3px;
+  }
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding:16px 0 12px;
+    scrollbar-width:none;
+  }
+  nav.tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    flex:none;
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--ink-soft);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    padding:8px 14px;
+    border-radius:20px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+    white-space:nowrap;
+  }
+  .tab-btn:hover{border-color:var(--ink-faint);}
+  .tab-btn.active{
+    background:var(--ink);
+    color:var(--surface);
+    border-color:var(--ink);
+  }
+
+  main{padding:20px;}
+
+  /* ---------- Overview cards ---------- */
+  .overview-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .subject-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:16px 18px;
+    cursor:pointer;
+    transition:border-color .15s ease, transform .1s ease;
+  }
+  .subject-card:hover{border-color:var(--ink-faint);}
+  .subject-card:active{transform:scale(0.995);}
+  .subject-card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .subject-name{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:16px;
+  }
+  .subject-count{
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .segbar{
+    display:flex;
+    height:8px;
+    border-radius:5px;
+    overflow:hidden;
+    background:var(--unrated-dim);
+  }
+  .segbar .seg{height:100%;}
+  .seg-red{background:var(--red);}
+  .seg-amber{background:var(--amber);}
+  .seg-green{background:var(--green);}
+  .legend-row{
+    display:flex;
+    gap:14px;
+    margin-top:10px;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+  .dot-red{background:var(--red);}
+  .dot-amber{background:var(--amber);}
+  .dot-green{background:var(--green);}
+  .dot-grey{background:var(--unrated);}
+
+  /* ---------- Subject detail ---------- */
+  .detail-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:14px;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .detail-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:20px;
+    font-weight:600;
+  }
+  .filter-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .filter-chip{
+    border:1px solid var(--border);
+    background:var(--surface);
+    color:var(--ink-soft);
+    font-size:12px;
+    padding:5px 10px;
+    border-radius:14px;
+    cursor:pointer;
+  }
+  .filter-chip.active{
+    background:var(--ink);
+    color:var(--surface);
+    border-color:var(--ink);
+  }
+
+  .category-group{margin-bottom:22px;}
+  .category-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    cursor:pointer;
+    border-bottom:1px solid var(--border);
+  }
+  .category-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:15px;
+  }
+  .category-meta{
+    font-size:12px;
+    color:var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .chevron{
+    transition:transform .15s ease;
+    color:var(--ink-faint);
+  }
+  .category-group.collapsed .chevron{transform:rotate(-90deg);}
+  .category-body{
+    display:flex;
+    flex-direction:column;
+  }
+  .category-group.collapsed .category-body{display:none;}
+
+  .item-row{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:12px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .item-row:last-child{border-bottom:none;}
+  .item-text{flex:1;min-width:0;}
+  .item-sub{
+    font-size:11px;
+    color:var(--ink-faint);
+    text-transform:none;
+    margin-bottom:2px;
+  }
+  .item-point{
+    font-size:14px;
+    line-height:1.45;
+  }
+  .item-notes-toggle{
+    background:none;
+    border:none;
+    color:var(--ink-faint);
+    font-size:11px;
+    cursor:pointer;
+    padding:0;
+    margin-top:6px;
+    text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  .item-notes{
+    display:none;
+    margin-top:8px;
+  }
+  .item-notes.open{display:block;}
+  .item-notes textarea{
+    width:100%;
+    min-height:50px;
+    resize:vertical;
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:13px;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  .item-notes textarea:focus{
+    outline:none;
+    border-color:var(--ink-faint);
+  }
+
+  /* Traffic light control */
+  .signal{
+    flex:none;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    background:#2A2823;
+    padding:6px 5px;
+    border-radius:9px;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
+  }
+  .light{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    cursor:pointer;
+    border:none;
+    padding:0;
+    background:#484540;
+    transition:background .12s ease, box-shadow .12s ease, transform .08s ease;
+  }
+  .light:active{transform:scale(0.9);}
+  .light.red.on{background:var(--red);box-shadow:0 0 8px 1px rgba(214,69,69,.7);}
+  .light.amber.on{background:var(--amber);box-shadow:0 0 8px 1px rgba(232,163,61,.7);}
+  .light.green.on{background:var(--green);box-shadow:0 0 8px 1px rgba(58,148,93,.7);}
+
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-soft);
+  }
+
+  footer.reset-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:24px;
+  }
+  .reset-btn{
+    background:none;
+    border:1px solid var(--border);
+    color:var(--ink-faint);
+    font-size:12px;
+    padding:6px 12px;
+    border-radius:14px;
+    cursor:pointer;
+  }
+  .reset-btn:hover{border-color:var(--red);color:var(--red);}
+
+  @media (max-width:520px){
+    .overall-pct{font-size:24px;}
+    header{padding:16px 16px 0;}
+    main{padding:16px;}
+    .item-point{font-size:13.5px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="header-row">
+      <div class="title-block">
+        <h1>HSC Tracker</h1>
+        <div class="sub">Dev's Year 12 syllabus tracker</div>
+      </div>
+      <div class="overall-pct" id="overallPct">0%<span>confident</span></div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+const SUBJECT_DATA = {"Maths Advanced":[{"c":"Further graph transformations and modelling","sc":"Transformations of trig functions","p":"Apply reflections/translations/dilations to sin x, cos x, tan x"},{"c":"Further graph transformations and modelling","sc":"Transformations of trig functions","p":"Determine domain, range, period, amplitude of transformed trig functions"},{"c":"Further graph transformations and modelling","sc":"Transformations of trig functions","p":"Solve equations/graphical problems with transformed trig functions"},{"c":"Further graph transformations and modelling","sc":"Modelling with functions","p":"Model periodic phenomena using transformed trig functions"},{"c":"Further graph transformations and modelling","sc":"Modelling with functions","p":"Model and solve practical problems with functions and transformations"},{"c":"Further graph transformations and modelling","sc":"Modelling with functions","p":"Use logarithmic scales (decibels, seismic, star magnitude, pH)"},{"c":"Sequences and series","sc":"Sequences and series basics","p":"Define a sequence, nth term notation, finite vs infinite"},{"c":"Sequences and series","sc":"Sequences and series basics","p":"Define nth partial sum and summation notation"},{"c":"Sequences and series","sc":"Arithmetic sequences and series","p":"Find the nth term of an arithmetic sequence"},{"c":"Sequences and series","sc":"Arithmetic sequences and series","p":"Find the sum of an arithmetic series (two formulas)"},{"c":"Sequences and series","sc":"Arithmetic sequences and series","p":"Model growth/decay problems with arithmetic sequences"},{"c":"Sequences and series","sc":"Geometric sequences and series","p":"Find the nth term of a geometric sequence"},{"c":"Sequences and series","sc":"Geometric sequences and series","p":"Find the sum of a geometric series"},{"c":"Sequences and series","sc":"Geometric sequences and series","p":"Find the limiting sum S\u221e for |r|<1"},{"c":"Sequences and series","sc":"Geometric sequences and series","p":"Model growth/decay problems with geometric sequences"},{"c":"Differential calculus","sc":"Differentiating exponential functions","p":"Differentiate f(x)=ke^(ax) and e^(f(x)) using the chain rule"},{"c":"Differential calculus","sc":"Differentiating exponential functions","p":"Prove and use d/dx(a\u02e3)=(ln a)a\u02e3"},{"c":"Differential calculus","sc":"Differentiating logarithmic functions","p":"Prove and use d/dx(ln x)=1/x"},{"c":"Differential calculus","sc":"Differentiating logarithmic functions","p":"Prove and use d/dx(log_a x)=1/(x ln a)"},{"c":"Differential calculus","sc":"Differentiating logarithmic functions","p":"Differentiate ln f(x) using the chain rule"},{"c":"Differential calculus","sc":"Differentiating trig functions","p":"Derive and use d/dx(sin x)=cos x and d/dx(cos x)=-sin x"},{"c":"Differential calculus","sc":"Differentiating trig functions","p":"Derive and use d/dx(tan x)=sec\u00b2x"},{"c":"Differential calculus","sc":"Differentiating trig functions","p":"Find derivatives of cosec x, sec x, cot x"},{"c":"Differential calculus","sc":"Differentiating trig functions","p":"Differentiate sin f(x), cos f(x), tan f(x) using the chain rule"},{"c":"Differential calculus","sc":"Using derivatives","p":"Apply product/quotient/chain rules to combined functions"},{"c":"Differential calculus","sc":"Using derivatives","p":"Solve problems involving tangents and normals"},{"c":"Integral calculus","sc":"Primitive functions","p":"Define a primitive function and find primitives of x\u207f"},{"c":"Integral calculus","sc":"Primitive functions","p":"Use sum and constant-multiple rules for primitives"},{"c":"Integral calculus","sc":"Primitive functions","p":"Find primitives of (ax+b)\u207f"},{"c":"Integral calculus","sc":"Primitive functions","p":"Find f(x) given f'(x) and an initial condition"},{"c":"Integral calculus","sc":"The definite integral & FTC","p":"Understand the definite integral as a limit of a sum"},{"c":"Integral calculus","sc":"The definite integral & FTC","p":"Evaluate definite integrals using geometric area formulas"},{"c":"Integral calculus","sc":"The definite integral & FTC","p":"Understand and apply the Fundamental Theorem of Calculus"},{"c":"Integral calculus","sc":"Indefinite integrals","p":"Use indefinite integral notation and \u222bx\u207f dx formula"},{"c":"Integral calculus","sc":"Indefinite integrals","p":"Use sum/multiple rules for integrals"},{"c":"Integral calculus","sc":"Indefinite integrals","p":"Apply \u222bf'(x)[f(x)]\u207f dx formula"},{"c":"Integral calculus","sc":"Integrating exp/log/trig functions","p":"Integrate exponential functions (e^x, e^(ax+b), a^x)"},{"c":"Integral calculus","sc":"Integrating exp/log/trig functions","p":"Integrate 1/x and 1/(ax+b), use \u222bf'(x)/f(x) dx=ln|f(x)|+C"},{"c":"Integral calculus","sc":"Integrating exp/log/trig functions","p":"Integrate sin x, cos x, sec\u00b2x and related composite forms"},{"c":"Integral calculus","sc":"Areas and the definite integral","p":"Calculate area between a curve and the x-axis"},{"c":"Integral calculus","sc":"Areas and the definite integral","p":"Calculate area between a curve and the y-axis"},{"c":"Integral calculus","sc":"Areas and the definite integral","p":"Use additive interval property and \u222b[a,b]=-\u222b[b,a]"},{"c":"Integral calculus","sc":"Areas and the definite integral","p":"Use symmetry (odd/even functions) to simplify integrals"},{"c":"Integral calculus","sc":"Areas and the definite integral","p":"Apply the Trapezoidal rule to approximate integrals"},{"c":"Integral calculus","sc":"Areas and the definite integral","p":"Model and solve practical area/integral problems"},{"c":"Applications of calculus","sc":"Turning points, inflections and graphing","p":"Use second derivative to determine concavity"},{"c":"Applications of calculus","sc":"Turning points, inflections and graphing","p":"Identify points of inflection"},{"c":"Applications of calculus","sc":"Turning points, inflections and graphing","p":"Classify stationary points using the second derivative test"},{"c":"Applications of calculus","sc":"Turning points, inflections and graphing","p":"Graph a function using turning points, inflections, symmetry and asymptotes"},{"c":"Applications of calculus","sc":"Turning points, inflections and graphing","p":"Graph y=f'(x) and y=f''(x) given a graph of y=f(x)"},{"c":"Applications of calculus","sc":"Optimisation","p":"Define global maximum/minimum"},{"c":"Applications of calculus","sc":"Optimisation","p":"Model optimisation problems by defining variables and functions"},{"c":"Applications of calculus","sc":"Optimisation","p":"Solve optimisation problems using calculus"},{"c":"Applications of calculus","sc":"Optimisation","p":"Check endpoints/discontinuities and justify conclusions"},{"c":"Applications of calculus","sc":"Rates of change","p":"Find and interpret dQ/dt and d\u00b2Q/dt\u00b2 in practical contexts"},{"c":"Applications of calculus","sc":"Rates of change","p":"Understand and apply dQ/dt=kQ and Q=Ae^(kt)"},{"c":"Applications of calculus","sc":"Rates of change","p":"Model exponential growth and decay problems"},{"c":"Applications of calculus","sc":"Rates of change","p":"Find velocity and acceleration of a particle from displacement"},{"c":"Applications of calculus","sc":"Rates of change","p":"Solve motion problems using differentiation and integration"},{"c":"Random variables","sc":"Discrete random variables","p":"Define a discrete probability distribution"},{"c":"Random variables","sc":"Discrete random variables","p":"Calculate expected value E(X) and variance Var(X)"},{"c":"Random variables","sc":"Discrete random variables","p":"Generate and represent a probability distribution"},{"c":"Random variables","sc":"Discrete random variables","p":"Solve problems involving probability, expectation and variance"},{"c":"Random variables","sc":"Continuous random variables","p":"Understand cumulative distribution function (CDF)"},{"c":"Random variables","sc":"Continuous random variables","p":"Understand probability density function (PDF) and its properties"},{"c":"Random variables","sc":"Continuous random variables","p":"Find mode, median, quartiles from PDF/CDF"},{"c":"Random variables","sc":"Continuous random variables","p":"Find expected value and variance of a continuous random variable"},{"c":"Random variables","sc":"The normal distribution","p":"Understand the normal distribution and notation X~N(\u03bc,\u03c3\u00b2)"},{"c":"Random variables","sc":"The normal distribution","p":"Apply the empirical rule (68%/95%/99.7%)"},{"c":"Random variables","sc":"The normal distribution","p":"Define and interpret z-scores"},{"c":"Random variables","sc":"The normal distribution","p":"Use z-scores to compare data and find probabilities"},{"c":"Random variables","sc":"The normal distribution","p":"Solve problems finding mean/SD given a probability"},{"c":"Financial mathematics","sc":"Reducing balance loans","p":"Understand a reducing balance loan as compound interest with repayments"},{"c":"Financial mathematics","sc":"Reducing balance loans","p":"Examine effect of interest rate/repayment on time to repay"},{"c":"Financial mathematics","sc":"Reducing balance loans","p":"Solve problems on total paid, repayments, balance owing, time to repay"},{"c":"Financial mathematics","sc":"Annuities","p":"Define an annuity (investment or withdrawal type)"},{"c":"Financial mathematics","sc":"Annuities","p":"Model the future value of an annuity"},{"c":"Financial mathematics","sc":"Annuities","p":"Solve annuity problems using the geometric series sum formula"}],"Physics":[{"c":"Module 5: Advanced Mechanics","sc":"Projectile motion","p":"Resolve projectile motion into horizontal/vertical components (constant g, no air resistance)"},{"c":"Module 5: Advanced Mechanics","sc":"Projectile motion","p":"Derive relationships between initial velocity, launch angle, max height, time of flight, final velocity, launch height and range"},{"c":"Module 5: Advanced Mechanics","sc":"Projectile motion","p":"Conduct a practical investigation to validate projectile motion relationships"},{"c":"Module 5: Advanced Mechanics","sc":"Projectile motion","p":"Apply equations of motion to solve, model and predict projectile motion problems"},{"c":"Module 5: Advanced Mechanics","sc":"Circular motion","p":"Investigate relationships between centripetal force, mass, speed and radius"},{"c":"Module 5: Advanced Mechanics","sc":"Circular motion","p":"Analyse forces on objects in uniform circular motion (bends, string, banked tracks)"},{"c":"Module 5: Advanced Mechanics","sc":"Circular motion","p":"Solve problems using a_c=v\u00b2/r, v=2\u03c0r/T, F_c=mv\u00b2/r, \u03c9=\u0394\u03b8/t"},{"c":"Module 5: Advanced Mechanics","sc":"Circular motion","p":"Investigate the relationship between total energy and work done in circular motion"},{"c":"Module 5: Advanced Mechanics","sc":"Circular motion","p":"Investigate the relationship between torque and rotation of mechanical systems (\u03c4=rF sin\u03b8)"},{"c":"Module 5: Advanced Mechanics","sc":"Motion in gravitational fields","p":"Apply Newton's Law of Universal Gravitation to find gravitational force and field strength"},{"c":"Module 5: Advanced Mechanics","sc":"Motion in gravitational fields","p":"Investigate orbital motion relationships between force, mass, radius, velocity and period"},{"c":"Module 5: Advanced Mechanics","sc":"Motion in gravitational fields","p":"Predict orbital properties of planets/satellites (incl. geostationary orbits) and relate to uses"},{"c":"Module 5: Advanced Mechanics","sc":"Motion in gravitational fields","p":"Apply Kepler's Third Law (r\u00b3/T\u00b2 = GM/4\u03c0\u00b2)"},{"c":"Module 5: Advanced Mechanics","sc":"Motion in gravitational fields","p":"Derive/apply gravitational potential energy, escape velocity and total orbital energy"},{"c":"Module 6: Electromagnetism","sc":"Charged particles & fields","p":"Derive and analyse the interaction between charged particles and uniform electric fields"},{"c":"Module 6: Electromagnetism","sc":"Charged particles & fields","p":"Model trajectories of charged particles in electric fields vs projectiles in gravity"},{"c":"Module 6: Electromagnetism","sc":"Charged particles & fields","p":"Analyse the interaction between charged particles and uniform magnetic fields (F=qvB sin\u03b8)"},{"c":"Module 6: Electromagnetism","sc":"Charged particles & fields","p":"Compare charged-particle motion in magnetic vs electric fields and other circular motion"},{"c":"Module 6: Electromagnetism","sc":"The motor effect","p":"Investigate force on a current-carrying conductor in a magnetic field, and conditions for max/zero force"},{"c":"Module 6: Electromagnetism","sc":"The motor effect","p":"Investigate the interaction between two parallel current-carrying wires and its link to the SI ampere"},{"c":"Module 6: Electromagnetism","sc":"Electromagnetic induction","p":"Describe how magnetic flux can change (\u03a6=BA cos\u03b8)"},{"c":"Module 6: Electromagnetism","sc":"Electromagnetic induction","p":"Analyse Faraday's Law and Lenz's Law examples of induced emf"},{"c":"Module 6: Electromagnetism","sc":"Electromagnetic induction","p":"Analyse ideal transformer operation (Vp/Vs=Np/Ns, VpIp=VsIs)"},{"c":"Module 6: Electromagnetism","sc":"Electromagnetic induction","p":"Evaluate limitations of the ideal transformer model and efficiency strategies"},{"c":"Module 6: Electromagnetism","sc":"Electromagnetic induction","p":"Analyse step-up/step-down transformer applications (e.g. transmission lines)"},{"c":"Module 6: Electromagnetism","sc":"Applications of the motor effect","p":"Investigate the operation of a simple DC motor (components, torque, back emf)"},{"c":"Module 6: Electromagnetism","sc":"Applications of the motor effect","p":"Analyse the operation of DC/AC generators and AC induction motors"},{"c":"Module 6: Electromagnetism","sc":"Applications of the motor effect","p":"Relate Lenz's Law and conservation of energy to DC motors and magnetic braking"},{"c":"Module 7: The Nature of Light","sc":"Electromagnetic spectrum","p":"Investigate Maxwell's contribution to classical electromagnetism"},{"c":"Module 7: The Nature of Light","sc":"Electromagnetic spectrum","p":"Describe production/propagation of EM waves relative to Maxwell's theory"},{"c":"Module 7: The Nature of Light","sc":"Electromagnetic spectrum","p":"Investigate historical/contemporary methods for measuring the speed of light"},{"c":"Module 7: The Nature of Light","sc":"Electromagnetic spectrum","p":"Examine spectra and use spectroscopy to identify elements"},{"c":"Module 7: The Nature of Light","sc":"Electromagnetic spectrum","p":"Investigate how stellar spectra reveal temperature, velocity, density and composition"},{"c":"Module 7: The Nature of Light","sc":"Light: wave model","p":"Analyse diffraction of light qualitatively"},{"c":"Module 7: The Nature of Light","sc":"Light: wave model","p":"Analyse interference of light using double slit/diffraction gratings (d sin\u03b8=m\u03bb)"},{"c":"Module 7: The Nature of Light","sc":"Light: wave model","p":"Analyse evidence for Newton's vs Huygens' models of light"},{"c":"Module 7: The Nature of Light","sc":"Light: wave model","p":"Investigate Malus' Law for plane polarisation (I=Imax cos\u00b2\u03b8)"},{"c":"Module 7: The Nature of Light","sc":"Light: quantum model","p":"Analyse black body radiation evidence and Wien's Law (\u03bbmax=b/T)"},{"c":"Module 7: The Nature of Light","sc":"Light: quantum model","p":"Investigate photoelectric effect evidence against the wave model"},{"c":"Module 7: The Nature of Light","sc":"Light: quantum model","p":"Analyse the photoelectric effect using Kmax=hf\u2212\u03c6"},{"c":"Module 7: The Nature of Light","sc":"Light and special relativity","p":"Analyse evidence for Einstein's two postulates of special relativity"},{"c":"Module 7: The Nature of Light","sc":"Light and special relativity","p":"Investigate evidence for time dilation and length contraction"},{"c":"Module 7: The Nature of Light","sc":"Light and special relativity","p":"Describe consequences of relativistic momentum and the speed limit on particles"},{"c":"Module 7: The Nature of Light","sc":"Light and special relativity","p":"Apply E=mc\u00b2 to calculate energy released from mass conversion"},{"c":"Module 8: Universe to the Atom","sc":"Origins of the elements","p":"Investigate the transformation of radiation into matter after the Big Bang"},{"c":"Module 8: Universe to the Atom","sc":"Origins of the elements","p":"Investigate evidence for Hubble's discovery of the expanding universe"},{"c":"Module 8: Universe to the Atom","sc":"Origins of the elements","p":"Apply Einstein's mass-energy equivalence to nuclear reactions in stars"},{"c":"Module 8: Universe to the Atom","sc":"Origins of the elements","p":"Compare emission/absorption spectra with a continuous black body spectrum"},{"c":"Module 8: Universe to the Atom","sc":"Origins of the elements","p":"Investigate stellar spectra features used to classify stars"},{"c":"Module 8: Universe to the Atom","sc":"Origins of the elements","p":"Use the Hertzsprung-Russell diagram to determine stellar characteristics"},{"c":"Module 8: Universe to the Atom","sc":"Origins of the elements","p":"Investigate nucleosynthesis reactions in main/post-main sequence stars"},{"c":"Module 8: Universe to the Atom","sc":"Structure of the atom","p":"Investigate evidence for the electron (cathode rays, Thomson, Millikan)"},{"c":"Module 8: Universe to the Atom","sc":"Structure of the atom","p":"Investigate evidence for the nuclear model (Geiger-Marsden, Rutherford, Chadwick)"},{"c":"Module 8: Universe to the Atom","sc":"Quantum mechanical nature of the atom","p":"Assess limitations of the Rutherford and Bohr atomic models"},{"c":"Module 8: Universe to the Atom","sc":"Quantum mechanical nature of the atom","p":"Investigate the Balmer series line emission spectrum of hydrogen"},{"c":"Module 8: Universe to the Atom","sc":"Quantum mechanical nature of the atom","p":"Relate quantised energy levels to the hydrogen emission spectrum (E=hf, E=hc/\u03bb, Rydberg formula)"},{"c":"Module 8: Universe to the Atom","sc":"Quantum mechanical nature of the atom","p":"Investigate de Broglie's matter waves (\u03bb=h/mv)"},{"c":"Module 8: Universe to the Atom","sc":"Quantum mechanical nature of the atom","p":"Analyse Schr\u00f6dinger's contribution to the current model of the atom"},{"c":"Module 8: Universe to the Atom","sc":"Properties of the nucleus","p":"Analyse spontaneous decay and alpha/beta/gamma radiation properties"},{"c":"Module 8: Universe to the Atom","sc":"Properties of the nucleus","p":"Model half-life and predict activity/amount using decay equations"},{"c":"Module 8: Universe to the Atom","sc":"Properties of the nucleus","p":"Model nuclear fission (controlled/uncontrolled chain reactions) and energy release"},{"c":"Module 8: Universe to the Atom","sc":"Properties of the nucleus","p":"Analyse mass-energy conservation in nuclear transmutations"},{"c":"Module 8: Universe to the Atom","sc":"Properties of the nucleus","p":"Account for energy release in nuclear fusion"},{"c":"Module 8: Universe to the Atom","sc":"Properties of the nucleus","p":"Predict energy released using mass defect, binding energy and E=mc\u00b2"},{"c":"Module 8: Universe to the Atom","sc":"Deep inside the atom","p":"Analyse evidence that protons/neutrons are not fundamental particles"},{"c":"Module 8: Universe to the Atom","sc":"Deep inside the atom","p":"Investigate the Standard Model (quarks, hadrons, leptons, fundamental forces)"},{"c":"Module 8: Universe to the Atom","sc":"Deep inside the atom","p":"Investigate the role of particle accelerators in testing the Standard Model"}],"Engineering Studies":[{"c":"Civil Structures","sc":"Historical & societal influences","p":"Outline the history of technological change in civil structures"},{"c":"Civil Structures","sc":"Historical & societal influences","p":"Investigate construction processes and materials used historically"},{"c":"Civil Structures","sc":"Historical & societal influences","p":"Examine the impact of civil structures on society and the environment"},{"c":"Civil Structures","sc":"Engineering mechanics","p":"Solve pin-jointed truss problems using method of joints/sections"},{"c":"Civil Structures","sc":"Engineering mechanics","p":"Evaluate the stress/strain diagram in understanding material properties"},{"c":"Civil Structures","sc":"Engineering mechanics","p":"Calculate and graph bending stress and shear force for simply supported beams"},{"c":"Civil Structures","sc":"Engineering mechanics","p":"Describe the effect of uniformly distributed loads on a simple beam"},{"c":"Civil Structures","sc":"Engineering mechanics","p":"Apply mathematical/graphical methods to stress and strain problems"},{"c":"Civil Structures","sc":"Engineering materials","p":"Describe basic and specialised testing of materials used in civil structures"},{"c":"Civil Structures","sc":"Engineering materials","p":"Examine the properties, uses and appropriateness of materials in civil structures"},{"c":"Civil Structures","sc":"Engineering materials","p":"Examine how failure due to cracking can be repaired or eliminated"},{"c":"Civil Structures","sc":"Engineering materials","p":"Make appropriate choices of materials/processes based on structure-property relationships"},{"c":"Civil Structures","sc":"Engineering materials","p":"Explain special properties of composites; compare reinforced/pre/post-tensioned structures"},{"c":"Civil Structures","sc":"Engineering materials","p":"Evaluate corrosion problems and describe protection methods"},{"c":"Civil Structures","sc":"Engineering materials","p":"Describe methods for recycling materials when civil structures are replaced"},{"c":"Civil Structures","sc":"Communication","p":"Produce orthogonal assembly dimensioned drawings to AS1100"},{"c":"Civil Structures","sc":"Communication","p":"Produce freehand pictorial drawings"},{"c":"Civil Structures","sc":"Communication","p":"Apply graphical methods to solve engineering problems"},{"c":"Civil Structures","sc":"Communication","p":"Use CAD/software to solve engineering problems"},{"c":"Civil Structures","sc":"Communication","p":"Complete an Engineering Report on an aspect of civil structures"},{"c":"Personal & Public Transport","sc":"Historical & societal influence","p":"Investigate the history of technological change in transport and its impact on society"},{"c":"Personal & Public Transport","sc":"Historical & societal influence","p":"Identify design features in transport system engineering"},{"c":"Personal & Public Transport","sc":"Historical & societal influence","p":"Describe environmental impact of transport energy requirements"},{"c":"Personal & Public Transport","sc":"Historical & societal influence","p":"Analyse the impact of transport developments on the environment"},{"c":"Personal & Public Transport","sc":"Engineering mechanics","p":"Apply methods for mechanical advantage, velocity ratio and efficiency"},{"c":"Personal & Public Transport","sc":"Engineering mechanics","p":"Analyse problems involving static friction"},{"c":"Personal & Public Transport","sc":"Engineering mechanics","p":"Differentiate energy and power concepts and apply basic calculations"},{"c":"Personal & Public Transport","sc":"Engineering materials","p":"Investigate the application of material testing (hardness, impact)"},{"c":"Personal & Public Transport","sc":"Engineering materials","p":"Outline property changes from heat treatment processes"},{"c":"Personal & Public Transport","sc":"Engineering materials","p":"Justify ferrous material/process choices for transport parts"},{"c":"Personal & Public Transport","sc":"Engineering materials","p":"Explain ferrous metal forming processes (forging, rolling, casting, welding)"},{"c":"Personal & Public Transport","sc":"Engineering materials","p":"Justify non-ferrous metal choices based on structure/property relationships"},{"c":"Personal & Public Transport","sc":"Engineering materials","p":"Justify choices of ceramics/glasses and polymers used in transport"},{"c":"Personal & Public Transport","sc":"Engineering electricity/electronics","p":"Identify electrical systems used in transport and describe circuits"},{"c":"Personal & Public Transport","sc":"Engineering electricity/electronics","p":"Investigate principles/applications of electric motors in transport"},{"c":"Personal & Public Transport","sc":"Engineering electricity/electronics","p":"Analyse basic principles of control technology in transport"},{"c":"Personal & Public Transport","sc":"Engineering electricity/electronics","p":"Appreciate the safe use of electricity and electrical equipment"},{"c":"Personal & Public Transport","sc":"Communication","p":"Produce dimensioned, sectioned orthogonal drawings to AS1100"},{"c":"Personal & Public Transport","sc":"Communication","p":"Use appropriate software to produce orthogonal drawings"},{"c":"Personal & Public Transport","sc":"Communication","p":"Complete an Engineering Report on an aspect of personal/public transport"},{"c":"Aeronautical Engineering","sc":"Scope of the profession","p":"Define responsibilities and describe the work of aeronautical engineers"},{"c":"Aeronautical Engineering","sc":"Scope of the profession","p":"Examine projects and innovations within aeronautical engineering"},{"c":"Aeronautical Engineering","sc":"Scope of the profession","p":"Analyse training and career prospects in aeronautical engineering"},{"c":"Aeronautical Engineering","sc":"Historical & societal influences","p":"Research the history of flight in Australia and its impact on people's lives"},{"c":"Aeronautical Engineering","sc":"Historical & societal influences","p":"Examine safety issues related to flight and flying"},{"c":"Aeronautical Engineering","sc":"Mechanics & hydraulics","p":"Apply mathematical/graphical methods to flight-related problems (lift, thrust, weight, drag)"},{"c":"Aeronautical Engineering","sc":"Mechanics & hydraulics","p":"Outline Bernoulli's principle as applied to instrumentation and lift"},{"c":"Aeronautical Engineering","sc":"Mechanics & hydraulics","p":"Investigate bending stresses in airframes"},{"c":"Aeronautical Engineering","sc":"Mechanics & hydraulics","p":"Describe operational principles of propulsion systems (combustion, jet, turboprop, rockets)"},{"c":"Aeronautical Engineering","sc":"Mechanics & hydraulics","p":"Apply mathematical methods to hydraulics problems; describe altimeter/pitot tube operation"},{"c":"Aeronautical Engineering","sc":"Engineering materials","p":"Describe non-destructive tests used on aircraft"},{"c":"Aeronautical Engineering","sc":"Engineering materials","p":"Investigate structure/property relationships for aeronautical materials"},{"c":"Aeronautical Engineering","sc":"Engineering materials","p":"Investigate heat treatment effects on aluminium alloys"},{"c":"Aeronautical Engineering","sc":"Engineering materials","p":"Justify polymer and composite choices for aircraft applications"},{"c":"Aeronautical Engineering","sc":"Engineering materials","p":"Understand corrosion mechanisms in aircraft and prevention techniques"},{"c":"Aeronautical Engineering","sc":"Communication","p":"Produce dimensioned orthogonal component and scaled drawings to AS1100"},{"c":"Aeronautical Engineering","sc":"Communication","p":"Construct development of non-circular transition pieces"},{"c":"Aeronautical Engineering","sc":"Communication","p":"Construct quality graphical solutions to aerodynamic problems"},{"c":"Aeronautical Engineering","sc":"Communication","p":"Use CAD software to produce pictorial drawings"},{"c":"Aeronautical Engineering","sc":"Communication","p":"Complete an Engineering Report on the aeronautical engineering profession"},{"c":"Telecommunications Engineering","sc":"Scope of the profession","p":"Define responsibilities and describe the work of telecommunications engineers"},{"c":"Telecommunications Engineering","sc":"Scope of the profession","p":"Examine projects and innovations in telecommunications"},{"c":"Telecommunications Engineering","sc":"Scope of the profession","p":"Analyse training and career prospects in telecommunications engineering"},{"c":"Telecommunications Engineering","sc":"Historical & societal influences","p":"Research the history of technological change in telecommunications"},{"c":"Telecommunications Engineering","sc":"Historical & societal influences","p":"Describe the nature and importance of telecommunications engineering systems to society"},{"c":"Telecommunications Engineering","sc":"Engineering materials","p":"Analyse structure, properties, uses and appropriateness of telecommunications materials"},{"c":"Telecommunications Engineering","sc":"Engineering materials","p":"Select and justify materials/processes used in telecommunications (copper alloys)"},{"c":"Telecommunications Engineering","sc":"Engineering materials","p":"Identify types/functions of common semiconductors used in telecommunications"},{"c":"Telecommunications Engineering","sc":"Engineering materials","p":"Describe uses of polymers and fibre optics in telecommunications"},{"c":"Telecommunications Engineering","sc":"Engineering electricity/electronics","p":"Describe modulation/demodulation concepts and applications"},{"c":"Telecommunications Engineering","sc":"Engineering electricity/electronics","p":"Describe radio and digital television transmission/reception systems"},{"c":"Telecommunications Engineering","sc":"Engineering electricity/electronics","p":"Contrast fixed and mobile telephony systems"},{"c":"Telecommunications Engineering","sc":"Engineering electricity/electronics","p":"Distinguish communication bands in the electromagnetic spectrum"},{"c":"Telecommunications Engineering","sc":"Engineering electricity/electronics","p":"Contrast differences in transmission media (cable, wireless, infrared, microwave, fibre-optic)"},{"c":"Telecommunications Engineering","sc":"Engineering electricity/electronics","p":"Describe basic principles of satellite communication systems"},{"c":"Telecommunications Engineering","sc":"Engineering electricity/electronics","p":"Explain elementary digital logic (AND, NAND, NOR, OR gates)"},{"c":"Telecommunications Engineering","sc":"Communication","p":"Produce pictorial drawings"},{"c":"Telecommunications Engineering","sc":"Communication","p":"Justify computer graphics as a communication/problem-solving tool"},{"c":"Telecommunications Engineering","sc":"Communication","p":"Complete an Engineering Report on the telecommunications engineering profession"}],"Business Studies":[{"c":"Operations","sc":"Contemporary issues & investigation","p":"Discuss the balance between cost and quality in operations strategy"},{"c":"Operations","sc":"Contemporary issues & investigation","p":"Examine the impact of globalisation on operations strategy"},{"c":"Operations","sc":"Contemporary issues & investigation","p":"Identify government policies affecting operations management"},{"c":"Operations","sc":"Contemporary issues & investigation","p":"Explain why corporate social responsibility matters in operations"},{"c":"Operations","sc":"Contemporary issues & investigation","p":"Describe operations management features for a tertiary industry business"},{"c":"Operations","sc":"Contemporary issues & investigation","p":"Assess the relationship between operations and other business functions"},{"c":"Operations","sc":"Contemporary issues & investigation","p":"Explain how operations strategy sustains competitive advantage"},{"c":"Operations","sc":"Contemporary issues & investigation","p":"Recommend operations strategies for a hypothetical business"},{"c":"Operations","sc":"Role of operations management","p":"Understand the strategic role of operations management (cost leadership, differentiation)"},{"c":"Operations","sc":"Role of operations management","p":"Understand goods/services in different industries and interdependence with other functions"},{"c":"Operations","sc":"Influences","p":"Understand globalisation, technology, quality and cost-based competition influences"},{"c":"Operations","sc":"Influences","p":"Understand government policy, legal regulation and environmental sustainability"},{"c":"Operations","sc":"Influences","p":"Understand corporate social responsibility and legal vs ethical responsibility"},{"c":"Operations","sc":"Operations processes","p":"Understand inputs: transformed and transforming resources"},{"c":"Operations","sc":"Operations processes","p":"Understand transformation processes and the influence of volume/variety/variation/visibility"},{"c":"Operations","sc":"Operations processes","p":"Understand sequencing/scheduling (Gantt charts, critical path analysis)"},{"c":"Operations","sc":"Operations processes","p":"Understand technology, task design, process layout and monitoring/control/improvement"},{"c":"Operations","sc":"Operations processes","p":"Understand outputs: customer service and warranties"},{"c":"Operations","sc":"Operations strategies","p":"Understand performance objectives (quality, speed, dependability, flexibility, cost)"},{"c":"Operations","sc":"Operations strategies","p":"Understand new product/service design and development"},{"c":"Operations","sc":"Operations strategies","p":"Understand supply chain management (logistics, e-commerce, global sourcing)"},{"c":"Operations","sc":"Operations strategies","p":"Understand outsourcing advantages/disadvantages"},{"c":"Operations","sc":"Operations strategies","p":"Understand inventory management approaches (LIFO, FIFO, JIT)"},{"c":"Operations","sc":"Operations strategies","p":"Understand quality management (control, assurance, improvement)"},{"c":"Operations","sc":"Operations strategies","p":"Understand overcoming resistance to change and global operations factors"},{"c":"Marketing","sc":"Contemporary issues & investigation","p":"Explain why goods/services are central to marketing and operations"},{"c":"Marketing","sc":"Contemporary issues & investigation","p":"Examine why ethics and government regulation matter in marketing"},{"c":"Marketing","sc":"Contemporary issues & investigation","p":"Assess why a mix of promotional strategies matters"},{"c":"Marketing","sc":"Contemporary issues & investigation","p":"Evaluate marketing strategies for a good or service"},{"c":"Marketing","sc":"Contemporary issues & investigation","p":"Analyse a marketing plan for a business"},{"c":"Marketing","sc":"Contemporary issues & investigation","p":"Explain how globalisation has affected marketing management"},{"c":"Marketing","sc":"Role of marketing","p":"Understand the strategic role of marketing and interdependence with other functions"},{"c":"Marketing","sc":"Role of marketing","p":"Understand production, selling and marketing approaches"},{"c":"Marketing","sc":"Role of marketing","p":"Understand types of markets (resource, industrial, intermediate, consumer, mass, niche)"},{"c":"Marketing","sc":"Influences on marketing","p":"Understand psychological, sociocultural, economic and government influences on customer choice"},{"c":"Marketing","sc":"Influences on marketing","p":"Understand consumer laws (deceptive advertising, price discrimination, warranties)"},{"c":"Marketing","sc":"Influences on marketing","p":"Understand ethical issues in advertising and fair competition"},{"c":"Marketing","sc":"Marketing process","p":"Understand situational analysis (SWOT, product life cycle)"},{"c":"Marketing","sc":"Marketing process","p":"Understand market research and establishing market objectives"},{"c":"Marketing","sc":"Marketing process","p":"Understand identifying target markets and developing marketing strategies"},{"c":"Marketing","sc":"Marketing process","p":"Understand implementation, monitoring and controlling of marketing strategy"},{"c":"Marketing","sc":"Marketing strategies","p":"Understand market segmentation, differentiation and positioning"},{"c":"Marketing","sc":"Marketing strategies","p":"Understand product decisions (branding, packaging)"},{"c":"Marketing","sc":"Marketing strategies","p":"Understand pricing methods and strategies (skimming, penetration, loss leaders)"},{"c":"Marketing","sc":"Marketing strategies","p":"Understand the promotion mix and the communication process"},{"c":"Marketing","sc":"Marketing strategies","p":"Understand distribution channels and physical distribution issues"},{"c":"Marketing","sc":"Marketing strategies","p":"Understand people, processes, physical evidence and e-marketing"},{"c":"Marketing","sc":"Marketing strategies","p":"Understand global marketing (branding, standardisation, customisation, positioning)"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Explain conflicts between short-term and long-term financial objectives"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Analyse the influence of government and global markets on financial management"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Identify limitations of financial reporting"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Compare risks in domestic vs global financial transactions"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Calculate key financial ratios"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Assess business performance using comparative ratio analysis"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Recommend strategies to improve financial performance"},{"c":"Finance","sc":"Contemporary issues & investigation","p":"Examine ethical financial reporting practices"},{"c":"Finance","sc":"Role of financial management","p":"Understand objectives of financial management (profitability, growth, efficiency, liquidity, solvency)"},{"c":"Finance","sc":"Role of financial management","p":"Understand interdependence with other business functions"},{"c":"Finance","sc":"Influences on financial management","p":"Understand internal vs external sources of finance (debt, equity)"},{"c":"Finance","sc":"Influences on financial management","p":"Understand financial institutions and government influence (ASIC, taxation)"},{"c":"Finance","sc":"Influences on financial management","p":"Understand global market influences (economic outlook, funds, interest rates)"},{"c":"Finance","sc":"Processes of financial management","p":"Understand planning and implementing (budgets, record systems, financial controls)"},{"c":"Finance","sc":"Processes of financial management","p":"Understand debt vs equity financing and matching finance to purpose"},{"c":"Finance","sc":"Processes of financial management","p":"Understand monitoring/controlling via cash flow statement, income statement, balance sheet"},{"c":"Finance","sc":"Processes of financial management","p":"Calculate and interpret financial ratios (liquidity, gearing, profitability, efficiency)"},{"c":"Finance","sc":"Processes of financial management","p":"Understand comparative ratio analysis and limitations of financial reports"},{"c":"Finance","sc":"Financial management strategies","p":"Understand cash flow management strategies"},{"c":"Finance","sc":"Financial management strategies","p":"Understand working capital management (current assets/liabilities control)"},{"c":"Finance","sc":"Financial management strategies","p":"Understand profitability management (cost and revenue controls)"},{"c":"Finance","sc":"Financial management strategies","p":"Understand global financial management (exchange rates, payment methods, hedging, derivatives)"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Discuss government influence on employment contracts"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Explain how businesses show corporate social responsibility in HR"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Analyse causes of workplace disputes and resolution strategies"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Examine advantages of a diverse, culturally competent workforce"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Explain interdependence between HR and other business functions"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Compare negotiating enterprise agreements vs individual contracts"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Discuss advantages/disadvantages of outsourcing in the global market"},{"c":"Human Resources","sc":"Contemporary issues & investigation","p":"Evaluate HR management effectiveness and recommend strategies"},{"c":"Human Resources","sc":"Role of human resource management","p":"Understand the strategic role of HR and interdependence with other functions"},{"c":"Human Resources","sc":"Role of human resource management","p":"Understand outsourcing and using contractors (domestic/global)"},{"c":"Human Resources","sc":"Key influences","p":"Understand stakeholders (employers, employees, unions, government, society)"},{"c":"Human Resources","sc":"Key influences","p":"Understand the legal framework (contracts, minimum standards, awards)"},{"c":"Human Resources","sc":"Key influences","p":"Understand work health and safety, workers compensation, anti-discrimination/EEO"},{"c":"Human Resources","sc":"Key influences","p":"Understand economic, technological and social influences on HR"},{"c":"Human Resources","sc":"Key influences","p":"Understand ethics and corporate social responsibility in HR"},{"c":"Human Resources","sc":"Processes & strategies","p":"Understand acquisition, development, maintenance and separation processes"},{"c":"Human Resources","sc":"Processes & strategies","p":"Understand leadership style, job design and recruitment approaches"},{"c":"Human Resources","sc":"Processes & strategies","p":"Understand training/development, performance management and rewards"},{"c":"Human Resources","sc":"Processes & strategies","p":"Understand global HR considerations (costs, skills, supply)"},{"c":"Human Resources","sc":"Processes & strategies","p":"Understand workplace dispute resolution (negotiation, mediation, tribunals)"},{"c":"Human Resources","sc":"Effectiveness of HR management","p":"Understand indicators of HR effectiveness (corporate culture, benchmarking)"},{"c":"Human Resources","sc":"Effectiveness of HR management","p":"Understand staff turnover, absenteeism, accidents, disputation and worker satisfaction as indicators"}],"English Standard":[{"c":"Texts and Human Experiences","sc":"Understanding","p":"Understand how language, forms and features shape meaning for different audiences/purposes"},{"c":"Texts and Human Experiences","sc":"Understanding","p":"Understand how texts shape perspectives, personal/public worlds and diverse human experiences"},{"c":"Texts and Human Experiences","sc":"Understanding","p":"Understand the aesthetic qualities of texts and the power of language to express ideas"},{"c":"Texts and Human Experiences","sc":"Understanding","p":"Understand language used for connecting, questioning, affirming, challenging, speculating"},{"c":"Texts and Human Experiences","sc":"Understanding","p":"Understand evaluative language and metalanguage used to judge texts"},{"c":"Texts and Human Experiences","sc":"Responding","p":"Develop creative, informed and sustained interpretations supported by close textual analysis"},{"c":"Texts and Human Experiences","sc":"Responding","p":"Compose creative/critical texts that affirm or challenge ideas, values and perspectives"},{"c":"Texts and Human Experiences","sc":"Responding","p":"Compose texts using structures/language/style for specific audiences to reinterpret ideas"},{"c":"Language, Identity and Culture","sc":"Understanding","p":"Understand how personal, social, cultural and historical contexts shape meaning"},{"c":"Language, Identity and Culture","sc":"Understanding","p":"Understand how language features/forms influence perceptions of self, others and cultures"},{"c":"Language, Identity and Culture","sc":"Understanding","p":"Understand how mode and medium shape meaning"},{"c":"Language, Identity and Culture","sc":"Understanding","p":"Understand how context and cultural assumptions influence authors' perspectives"},{"c":"Language, Identity and Culture","sc":"Understanding","p":"Understand how content shapes social, moral and ethical positions in texts"},{"c":"Language, Identity and Culture","sc":"Responding","p":"Understand how language features, structures and style shape viewpoints and influence audiences"},{"c":"Language, Identity and Culture","sc":"Responding","p":"Use information/ideas to develop sustained, evidence-based, logical arguments"},{"c":"Language, Identity and Culture","sc":"Responding","p":"Understand how different perspectives/attitudes/values are represented in texts"},{"c":"Language, Identity and Culture","sc":"Responding","p":"Compose informed, cohesive interpretations supported by close textual analysis"},{"c":"Close Study of Literature","sc":"Understanding","p":"Understand how texts influence and position readers"},{"c":"Close Study of Literature","sc":"Understanding","p":"Understand how textual forms, language and style choices shape meaning"},{"c":"Close Study of Literature","sc":"Understanding","p":"Understand how mode/medium shape meaning and influence personal responses"},{"c":"Close Study of Literature","sc":"Understanding","p":"Understand the relationship between text and context"},{"c":"Close Study of Literature","sc":"Understanding","p":"Understand how texts conform to or challenge accepted conventions"},{"c":"Close Study of Literature","sc":"Responding","p":"Compose texts demonstrating understanding of how language/form/style shape meaning"},{"c":"Close Study of Literature","sc":"Responding","p":"Consider different interpretations of texts from a range of perspectives"},{"c":"Close Study of Literature","sc":"Responding","p":"Compose informed personal interpretations supported by close textual analysis"},{"c":"Close Study of Literature","sc":"Responding","p":"Compose logical, cohesive texts that build arguments from a literary text"},{"c":"The Craft of Writing","sc":"Understanding","p":"Understand the power of language to express ideas, perspectives and experiences"},{"c":"The Craft of Writing","sc":"Understanding","p":"Understand forms, features and style that shape imaginative, discursive, persuasive, reflective texts"},{"c":"The Craft of Writing","sc":"Responding","p":"Use processes to generate, investigate, organise, refine and present ideas"},{"c":"The Craft of Writing","sc":"Responding","p":"Use and manipulate genre across modes/mediums for a range of purposes/audiences"},{"c":"The Craft of Writing","sc":"Responding","p":"Compose texts by changing context, perspective or point of view and assess effectiveness"},{"c":"The Craft of Writing","sc":"Responding","p":"Compose imaginative/discursive/persuasive/reflective texts with thematic/stylistic connections"},{"c":"The Craft of Writing","sc":"Responding","p":"Use metalanguage to assess and reflect on meaning-making in own and others' writing"},{"c":"The Craft of Writing","sc":"Responding","p":"Draft, reflect, edit, refine, revise and present texts for a range of purposes/audiences"}]}
+;
+
+const SUBJECT_ORDER = Object.keys(SUBJECT_DATA);
+let currentTab = "overview";
+let collapsedCategories = {};
+let activeFilters = {};
+
+let statusStore = {};
+let loaded = false;
+
+function itemId(subject, idx){ return subject + "::" + idx; }
+
+async function loadStatus(){
+  try{
+    const res = await window.storage.get('hsc-status', false);
+    if(res && res.value){
+      statusStore = JSON.parse(res.value);
+    }
+  }catch(e){
+    statusStore = {};
+  }
+  loaded = true;
+  render();
+}
+
+async function saveStatus(){
+  try{
+    await window.storage.set('hsc-status', JSON.stringify(statusStore), false);
+  }catch(e){
+    console.error('save failed', e);
+  }
+}
+
+function getStatus(subject, idx){
+  const rec = statusStore[itemId(subject, idx)];
+  return rec ? rec.status : null;
+}
+function getNotes(subject, idx){
+  const rec = statusStore[itemId(subject, idx)];
+  return rec ? (rec.notes || '') : '';
+}
+function setStatus(subject, idx, status){
+  const id = itemId(subject, idx);
+  const existing = statusStore[id] || {};
+  const newStatus = existing.status === status ? null : status;
+  statusStore[id] = { status: newStatus, notes: existing.notes || '' };
+  saveStatus();
+}
+function setNotes(subject, idx, notes){
+  const id = itemId(subject, idx);
+  const existing = statusStore[id] || {};
+  statusStore[id] = { status: existing.status || null, notes };
+  saveStatus();
+}
+
+function countsFor(subject){
+  const items = SUBJECT_DATA[subject];
+  const c = { red:0, amber:0, green:0, unrated:0, total: items.length };
+  items.forEach((it, idx) => {
+    const s = getStatus(subject, idx);
+    if(s === 'red') c.red++;
+    else if(s === 'amber') c.amber++;
+    else if(s === 'green') c.green++;
+    else c.unrated++;
+  });
+  return c;
+}
+
+function overallCounts(){
+  const c = { red:0, amber:0, green:0, unrated:0, total:0 };
+  SUBJECT_ORDER.forEach(subj => {
+    const sc = countsFor(subj);
+    c.red += sc.red; c.amber += sc.amber; c.green += sc.green; c.unrated += sc.unrated; c.total += sc.total;
+  });
+  return c;
+}
+
+function renderTabs(){
+  const tabsEl = document.getElementById('tabs');
+  const tabs = [{key:'overview', label:'Overview'}].concat(
+    SUBJECT_ORDER.map(s => ({key:s, label:s}))
+  );
+  tabsEl.innerHTML = tabs.map(t =>
+    `<button class="tab-btn ${currentTab===t.key?'active':''}" data-tab="${t.key}">${t.label}</button>`
+  ).join('');
+  tabsEl.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentTab = btn.dataset.tab;
+      render();
+    });
+  });
+}
+
+function renderOverallPct(){
+  const c = overallCounts();
+  const pct = c.total ? Math.round((c.green / c.total) * 100) : 0;
+  document.getElementById('overallPct').innerHTML = pct + '%<span>confident</span>';
+}
+
+function renderOverview(){
+  const main = document.getElementById('main');
+  let html = '<div class="overview-list">';
+  SUBJECT_ORDER.forEach(subj => {
+    const c = countsFor(subj);
+    const pctRed = (c.red / c.total) * 100;
+    const pctAmber = (c.amber / c.total) * 100;
+    const pctGreen = (c.green / c.total) * 100;
+    html += `
+      <div class="subject-card" data-subject="${subj}">
+        <div class="subject-card-top">
+          <div class="subject-name">${subj}</div>
+          <div class="subject-count">${c.green}/${c.total} confident</div>
+        </div>
+        <div class="segbar">
+          <div class="seg seg-green" style="width:${pctGreen}%"></div>
+          <div class="seg seg-amber" style="width:${pctAmber}%"></div>
+          <div class="seg seg-red" style="width:${pctRed}%"></div>
+        </div>
+        <div class="legend-row">
+          <div class="legend-item"><span class="dot dot-red"></span>${c.red} struggling</div>
+          <div class="legend-item"><span class="dot dot-amber"></span>${c.amber} getting there</div>
+          <div class="legend-item"><span class="dot dot-green"></span>${c.green} confident</div>
+          <div class="legend-item"><span class="dot dot-grey"></span>${c.unrated} not rated</div>
+        </div>
+      </div>
+    `;
+  });
+  html += '</div>';
+  main.innerHTML = html;
+  main.querySelectorAll('.subject-card').forEach(card => {
+    card.addEventListener('click', () => {
+      currentTab = card.dataset.subject;
+      render();
+    });
+  });
+}
+
+function renderSubject(subject){
+  const main = document.getElementById('main');
+  const items = SUBJECT_DATA[subject];
+  const c = countsFor(subject);
+
+  // group by category preserving order
+  const categories = [];
+  const catMap = {};
+  items.forEach((it, idx) => {
+    if(!catMap[it.c]){
+      catMap[it.c] = { name: it.c, items: [] };
+      categories.push(catMap[it.c]);
+    }
+    catMap[it.c].items.push({ ...it, idx });
+  });
+
+  const filterKey = subject;
+  const activeFilter = activeFilters[filterKey] || 'all';
+
+  let html = `
+    <div class="detail-header">
+      <div class="detail-title">${subject}</div>
+      <div class="subject-count">${c.green}/${c.total} confident &middot; ${c.red} red &middot; ${c.amber} amber</div>
+    </div>
+    <div class="filter-row">
+      <button class="filter-chip ${activeFilter==='all'?'active':''}" data-filter="all">All</button>
+      <button class="filter-chip ${activeFilter==='red'?'active':''}" data-filter="red">Red</button>
+      <button class="filter-chip ${activeFilter==='amber'?'active':''}" data-filter="amber">Amber</button>
+      <button class="filter-chip ${activeFilter==='green'?'active':''}" data-filter="green">Green</button>
+      <button class="filter-chip ${activeFilter==='unrated'?'active':''}" data-filter="unrated">Not rated</button>
+    </div>
+  `;
+
+  categories.forEach((cat, catIdx) => {
+    const visibleItems = cat.items.filter(it => {
+      if(activeFilter === 'all') return true;
+      const s = getStatus(subject, it.idx) || 'unrated';
+      return s === activeFilter;
+    });
+    if(visibleItems.length === 0) return;
+
+    const collapseKey = subject + '::' + cat.name;
+    const isCollapsed = !!collapsedCategories[collapseKey];
+    const catGreen = cat.items.filter(it => getStatus(subject, it.idx) === 'green').length;
+
+    html += `<div class="category-group ${isCollapsed?'collapsed':''}" data-collapse-key="${collapseKey}">
+      <div class="category-head">
+        <div class="category-title">${escapeHtml(cat.name)}</div>
+        <div class="category-meta">${catGreen}/${cat.items.length}<span class="chevron">&#9662;</span></div>
+      </div>
+      <div class="category-body">`;
+
+    visibleItems.forEach(it => {
+      const status = getStatus(subject, it.idx);
+      const notes = getNotes(subject, it.idx);
+      const notesId = `notes-${subject}-${it.idx}`.replace(/[^a-zA-Z0-9-]/g,'_');
+      html += `
+        <div class="item-row">
+          <div class="item-text">
+            <div class="item-sub">${escapeHtml(it.sc)}</div>
+            <div class="item-point">${escapeHtml(it.p)}</div>
+            <button class="item-notes-toggle" data-notes-toggle="${notesId}">${notes ? 'Edit note' : '+ Add note'}</button>
+            <div class="item-notes ${notes ? 'open':''}" id="${notesId}">
+              <textarea placeholder="Notes..." data-subject="${subject}" data-idx="${it.idx}">${escapeHtml(notes)}</textarea>
+            </div>
+          </div>
+          <div class="signal" data-subject="${subject}" data-idx="${it.idx}">
+            <button class="light red ${status==='red'?'on':''}" data-status="red" title="Struggling"></button>
+            <button class="light amber ${status==='amber'?'on':''}" data-status="amber" title="Getting there"></button>
+            <button class="light green ${status==='green'?'on':''}" data-status="green" title="Confident"></button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div></div>`;
+  });
+
+  main.innerHTML = html;
+
+  // wire filter chips
+  main.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      activeFilters[filterKey] = chip.dataset.filter;
+      render();
+    });
+  });
+
+  // wire category collapse
+  main.querySelectorAll('.category-head').forEach(head => {
+    head.addEventListener('click', () => {
+      const group = head.closest('.category-group');
+      const key = group.dataset.collapseKey;
+      collapsedCategories[key] = !collapsedCategories[key];
+      render();
+    });
+  });
+
+  // wire lights
+  main.querySelectorAll('.signal').forEach(sig => {
+    sig.querySelectorAll('.light').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const subj = sig.dataset.subject;
+        const idx = parseInt(sig.dataset.idx, 10);
+        setStatus(subj, idx, btn.dataset.status);
+        render();
+      });
+    });
+  });
+
+  // wire notes toggles
+  main.querySelectorAll('.item-notes-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.notesToggle);
+      target.classList.toggle('open');
+      if(target.classList.contains('open')){
+        const ta = target.querySelector('textarea');
+        if(ta) ta.focus();
+      }
+    });
+  });
+
+  // wire notes textareas
+  main.querySelectorAll('.item-notes textarea').forEach(ta => {
+    ta.addEventListener('blur', () => {
+      setNotes(ta.dataset.subject, parseInt(ta.dataset.idx,10), ta.value);
+    });
+  });
+}
+
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function render(){
+  if(!loaded){
+    document.getElementById('main').innerHTML = '<div class="empty-state">Loading your progress...</div>';
+    return;
+  }
+  renderTabs();
+  renderOverallPct();
+  if(currentTab === 'overview'){
+    renderOverview();
+  } else {
+    renderSubject(currentTab);
+  }
+}
+
+loadStatus();
+</script>
+</body>
+</html>
